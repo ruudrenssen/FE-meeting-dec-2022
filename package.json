@@ -11,6 +11,19 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^1.6.10"
+    "astro": "^1.6.10",
+    "d3-axis": "^3.0.0",
+    "d3-fetch": "^3.0.1",
+    "d3-selection": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/d3-axis": "^3.0.1",
+    "@types/d3-fetch": "^3.0.1",
+    "@types/d3-selection": "^3.0.3",
+    "eslint": "^8.28.0",
+    "eslint-plugin-astro": "^0.21.0",
+    "global-jsdom": "8.6.0",
+    "prettier": "^2.8.0",
+    "prettier-plugin-astro": "^0.7.0"
   }
 }

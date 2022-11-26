@@ -1,0 +1,30 @@
+---
+import globalJsdom from 'global-jsdom';
+import { select } from 'd3-selection';
+import { csv } from "d3-fetch";
+
+globalJsdom("<html><head></head><body></body></html>", {});
+
+const data = await csv("http://localhost:3000/data/pit_stops.csv");
+const width = 800;
+const height = 500;
+const margin = { top: 20, right: 20, bottom: 20, left: 20 }
+
+const svg = select("body").append("svg");
+const chart = svg.append("g").classed("chart", true);
+const xAxis = chart.append("g").classed("axis x", true);
+const yAxis = chart.append("g").classed("axis y", true);
+const plot = chart.append("g").classed("plot", true);
+
+// Update viewbox
+svg.attr("viewBox", `0 0 ${width} ${height}`)
+    .select("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+const el = svg.node()?.outerHTML;
+
+
+console.log(el, data);
+---
+
+<div set:html={el}></div>
