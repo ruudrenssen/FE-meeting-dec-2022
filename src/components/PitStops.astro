@@ -1,11 +1,27 @@
 ---
+
+/**
+ * -------------------- D3: Data driver documents --------------------
+ * 
+ * Topics:
+ * 1) JSDOM (D3 SSR)
+ * 2) Load CSV via D3
+ * 3) Grouping data
+ * 4) Querying grouped data
+ * 5) Getting min, max or other aggregated values via D3
+ * 6) Domain, range and scaling
+ * 7) Axis
+ * 8) D3-select: draw chart
+ * 
+ */
+
 import globalJsdom from "global-jsdom";
 
-import { select } from "d3-selection";
 import { csv } from "d3-fetch";
 import { minIndex, maxIndex, group, InternMap } from "d3-array";
 import { NumberValue, scaleLinear, scaleTime } from "d3-scale";
 import { Axis, axisBottom, axisLeft } from "d3-axis";
+import { select } from "d3-selection";
 
 import { milisecondsToMinutes } from "../utils";
 
@@ -22,7 +38,9 @@ globalJsdom("<html><head></head><body></body></html>", {});
  * NOTES: LOAD AND GROUP DATA
  * - csv import
  * - group data
- *
+ * - can group by any property (d3.rollup)
+ * - we only need to select by id fast
+ * 
  *  */
 // Load pit stops
 const pitstops = await csv("http://localhost:3000/data/pit_stops.csv");
@@ -92,6 +110,8 @@ const data = pitstops.map((d) => {
  * - fastest and slowest pit stop: y domain
  * - date first and last pit: x domain
  * - min vs. minIndex
+ * - d3.min takes care of numbers, dates and labels in an intuitive fashion; no need to cast
+ * - besides min and max, there is also mean, median, mode (value that appears the most often), sum, etc
  *
  *  */
 // Describe the domain (plot)
@@ -137,6 +157,7 @@ const range = {
  * - linear, time (exponential, quantile, treshold)
  * - domain (min max value)
  * - range (start end in pixels)
+ * - return function
  *
  *  */
 // Scaling functions
@@ -205,6 +226,6 @@ chart
 chart.select(".axis.y").call(yAxis);
 
 const el = svg.node()?.outerHTML;
----
 
+---
 <div set:html={el} />
