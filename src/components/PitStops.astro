@@ -71,8 +71,8 @@ const innerWidth = width - margin.right - margin.left;
 const height = 500;
 const innerHeight = height - margin.top - margin.bottom;
 const range = {
-  x: [margin.left, innerWidth],
-  y: [margin.top, innerHeight],
+  x: [0, innerWidth],
+  y: [0, innerHeight],
 };
 
 // Scaling functions
@@ -90,9 +90,12 @@ const yScale = (domain: number[], range: number[]) => {
     .nice();
 };
 
-// define axis
-const xAxis:Axis<Date | NumberValue> = axisBottom(xScale(domain.x, range.x)).tickSize(margin.top - innerHeight);
-const yAxis:Axis<NumberValue> = axisLeft(yScale(domain.y, range.y.reverse()))
+// Define axis
+const xAxis: Axis<Date | NumberValue> = axisBottom(
+  xScale(domain.x, range.x)
+).tickSize(-innerHeight);
+
+const yAxis: Axis<NumberValue> = axisLeft(yScale(domain.y, range.y.reverse()))
   .tickSize(-innerWidth)
   .tickFormat((d) => milisecondsToMinutes(d));
 
@@ -113,7 +116,10 @@ svg
   .attr("transform", `translate(${margin.left},${margin.top})`);
 
 // Update axis
-chart.select(".axis.x").call(xAxis).attr("transform", `translate(0,${innerHeight})`);
+chart
+  .select(".axis.x")
+  .call(xAxis)
+  .attr("transform", `translate(0,${innerHeight})`);
 chart.select(".axis.y").call(yAxis);
 
 const el = svg.node()?.outerHTML;
