@@ -1,62 +1,124 @@
 ---
 import globalJsdom from "global-jsdom";
+
 import { select } from "d3-selection";
 import { csv } from "d3-fetch";
-import { min, max, group } from "d3-array";
+import { minIndex, maxIndex, group } from "d3-array";
 
+import { NumberValue, scaleLinear, scaleTime } from "d3-scale";
+import { Axis, axisBottom, axisLeft } from "d3-axis";
+
+import { milisecondsToMinutes } from "../utils";
+
+// Create a simple DOM (needed for d3 selection)
 globalJsdom("<html><head></head><body></body></html>", {});
 
-const width = 800;
-const height = 500;
-const margin = { top: 20, right: 20, bottom: 20, left: 20 };
-
+// Load CSV data and create indexes based id
 const pitstops = await csv("http://localhost:3000/data/pit_stops.csv");
-const races = group((await csv("http://localhost:3000/data/races.csv")), d => String(d.raceId));
-const drivers = group((await csv("http://localhost:3000/data/drivers.csv")), d => String(d.driverId));
-const results = group((await csv("http://localhost:3000/data/results.csv")), d => String(d.raceId), d => String(d.driverId));
-const constructors = group((await csv("http://localhost:3000/data/constructors.csv")), d => String(d.constructorId));
+const races: any = group(
+  await csv("http://localhost:3000/data/races.csv"),
+  (d) => String(d.raceId)
+);
+const drivers: any = group(
+  await csv("http://localhost:3000/data/drivers.csv"),
+  (d) => String(d.driverId)
+);
+const constructors: any = group(
+  await csv("http://localhost:3000/data/constructors.csv"),
+  (d) => String(d.constructorId)
+);
+const results: any = group(
+  await csv("http://localhost:3000/data/results.csv"),
+  (d) => String(d.raceId),
+  (d) => String(d.driverId)
+);
 
+// Get related data via id
 const getRace = (raceId: string) => races.get(raceId)[0];
 const getDriver = (driverId: string) => drivers.get(driverId)[0];
-const getContructor = (raceId: string, driverId: string) => constructors.get(results.get(raceId)?.get(driverId)[0].constructorId)[0];
+const getContructor = (raceId: string, driverId: string) =>
+  constructors.get(results.get(raceId)?.get(driverId)[0].constructorId)[0];
 
-const data = pitstops.map(d => {
-    const race = getRace(String(d.raceId));
-    const driver = getDriver(String(d.driverId));
-    const constructor = getContructor(String(d.raceId), String(d.driverId));
+// Create data object for chart
+const data = pitstops.map((d) => {
+  const race = getRace(String(d.raceId));
+  const driver = getDriver(String(d.driverId));
+  const constructor = getContructor(String(d.raceId), String(d.driverId));
 
-    return {
-        y: Number(d.milliseconds),
-        x: race?.date,
-        race,
-        driver,
-        constructor
-    }
+  return {
+    y: Number(d.milliseconds),
+    x: new Date(race?.date),
+    race: race?.name,
+    driver: `${driver?.forename} ${driver.surname}`,
+    constructor: constructor?.name,
+  };
 });
 
-console.log(data);
+// Describe the domain (plot)
+const minX = data[minIndex(data, (d) => d.x)];
+const maxX = data[maxIndex(data, (d) => d.x)];
+const minY = data[minIndex(data, (d) => d.y)];
+const maxY = data[maxIndex(data, (d) => d.y)];
+const domain = {
+  x: [minX.x, maxX.x],
+  y: [minY.y, maxY.y],
+};
 
-const minX = min(data, (d) => d.x);
-const maxX = max(data, (d) => d.x);
-const minY = min(data, (d) => d.y);
-const maxY = max(data, (d) => d.y);
+// Describe the range (viewport)
+const margin = { top: 20, right: 20, bottom: 20, left: 60 };
+const width = 800;
+const innerWidth = width - margin.right - margin.left;
+const height = 500;
+const innerHeight = height - margin.top - margin.bottom;
+const range = {
+  x: [margin.left, innerWidth],
+  y: [margin.top, innerHeight],
+};
 
+// Scaling functions
+const xScale = (domain: Date[], range: number[]) => {
+  return scaleTime()
+    .domain(domain) // [min, max]
+    .range(range) // [start, end]
+    .nice(); // start and end on tick
+};
+
+const yScale = (domain: number[], range: number[]) => {
+  return scaleLinear()
+    .domain(domain) // [min, max]
+    .range(range) // [start, end]
+    .nice();
+};
+
+// define axis
+const xAxis:Axis<Date | NumberValue> = axisBottom(xScale(domain.x, range.x)).tickSize(margin.top - innerHeight);
+const yAxis:Axis<NumberValue> = axisLeft(yScale(domain.y, range.y.reverse()))
+  .tickSize(-innerWidth)
+  .tickFormat((d) => milisecondsToMinutes(d));
+
+// Build SVG chart
 const svg = select("body").append("svg");
 const chart = svg.append("g").classed("chart", true);
-const xAxis = chart.append("g").classed("axis x", true);
-const yAxis = chart.append("g").classed("axis y", true);
-const plot = chart.append("g").classed("plot", true);
+
+chart.append("g").classed("axis x", true);
+chart.append("g").classed("axis y", true);
+chart.append("g").classed("plot", true);
 
 // Update viewbox
 svg
   .attr("viewBox", `0 0 ${width} ${height}`)
+  .attr("width", width)
+  .attr("height", height)
   .select("g")
   .attr("transform", `translate(${margin.left},${margin.top})`);
 
+// Update axis
+chart.select(".axis.x").call(xAxis).attr("transform", `translate(0,${innerHeight})`);
+chart.select(".axis.y").call(yAxis);
+
 const el = svg.node()?.outerHTML;
 
-// console.log(el, data, minX, maxX, minY, maxY);
-
+console.log(el, range, domain);
 ---
 
 <div set:html={el} />
