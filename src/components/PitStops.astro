@@ -10,25 +10,20 @@ import { Axis, axisBottom, axisLeft } from "d3-axis";
 import { milisecondsToMinutes } from "../utils";
 
 /**
- * 
+ *
  * NOTES: JSDom, globalJsdom
  * - D3 needs the document on a global level
- * 
+ *
  *  */
-
 globalJsdom("<html><head></head><body></body></html>", {});
 
-
-
-
 /**
- * 
+ *
  * NOTES: LOAD AND GROUP DATA
  * - csv import
  * - group data
- * 
+ *
  *  */
-
 // Load pit stops
 const pitstops = await csv("http://localhost:3000/data/pit_stops.csv");
 
@@ -50,20 +45,20 @@ const results: InternMap = group(
   (d) => String(d.raceId),
   (d) => String(d.driverId)
 );
-// console.log("csv to json:", pitstops); // pit stop table
-// console.dir(results, { depth: 4 }); // raceId => driverid
-
-
-
+/**
+ * EXAMPLES:
+ * console.log("csv to json:", pitstops); // pit stop table
+ * console.dir(results, { depth: 4 }); // raceId => driverid
+ *
+ */
 
 /**
- * 
+ *
  * NOTES: GET GROUPED DATA
  * - getRace: group.get(raceId)
  * - chaining: getContructor group.get(raceId).get(driverId)
- * 
+ *
  *  */
-
 // Get related data via id
 const getRace = (raceId: string) => races.get(raceId)[0];
 const getDriver = (driverId: string) => drivers.get(driverId)[0];
@@ -84,21 +79,21 @@ const data = pitstops.map((d) => {
     constructor: constructor?.name,
   };
 });
-// console.log("race:", getRace('841'));
-// console.log("constructor:", getContructor('841','17'));
-
-
-
+/**
+ * EXAMPLES:
+ * - console.log("race:", getRace('841'));
+ * - console.log("constructor:", getContructor('841','17'));
+ *
+ */
 
 /**
- * 
+ *
  * NOTES: DOMAIN
  * - fastest and slowest pit stop: y domain
  * - date first and last pit: x domain
  * - min vs. minIndex
- * 
+ *
  *  */
-
 // Describe the domain (plot)
 const minX = data[minIndex(data, (d) => d.x)];
 const maxX = data[maxIndex(data, (d) => d.x)];
@@ -108,19 +103,21 @@ const domain = {
   x: [minX.x, maxX.x],
   y: [minY.y, maxY.y],
 };
-// console.log("first pit stop:", minX);
-// console.log("last pit stop:", maxX);
-// console.log("fastest pit stop:", minX);
-// console.log("slowest pit stop:", maxX);
-
-
+/**
+ * EXAMPLES:
+ * - console.log("first pit stop:", minX);
+ * - console.log("last pit stop:", maxX);
+ * - console.log("fastest pit stop:", minX);
+ * - console.log("slowest pit stop:", maxX);
+ *
+ */
 
 /**
- * 
+ *
  * NOTES: RANGE
  * - nomally based on browser / bounding box
  * - arbitrary values for example
- * 
+ *
  *  */
 // Describe the range (viewport)
 const margin = { top: 20, right: 20, bottom: 20, left: 60 };
@@ -133,18 +130,15 @@ const range = {
   y: [0, innerHeight],
 };
 
-
-
 /**
- * 
+ *
  * NOTES: SCALING FUNCTION
  * - turns value (domain) into coordinate (range)
  * - linear, time (exponential, quantile, treshold)
  * - domain (min max value)
  * - range (start end in pixels)
- * 
+ *
  *  */
-
 // Scaling functions
 const xScale = (domain: Date[], range: number[]) => {
   return scaleTime()
@@ -160,40 +154,33 @@ const yScale = (domain: number[], range: number[]) => {
     .nice();
 };
 
-
-
 /**
- * 
+ *
  * NOTES: AXIS
  * - x: time
  * - y: numerical / linear
+ * - yAxis: reverse()
  * - ticksize (minus?)
  * - tickFormat (turn value into label)
- * 
+ *
  *  */
-
 // Define axis
-const xAxis: Axis<Date | NumberValue> = axisBottom(
-  xScale(domain.x, range.x)
-).tickSize(-innerHeight);
+const xAxis: Axis<Date | NumberValue> = axisBottom(xScale(domain.x, range.x))
+  .tickSize(-innerHeight);
 
 const yAxis: Axis<NumberValue> = axisLeft(yScale(domain.y, range.y.reverse()))
   .tickSize(-innerWidth)
   .tickFormat((d) => milisecondsToMinutes(d));
 
-
-
-
 /**
- * 
+ *
  * NOTES: SVG
  * - create groups: container, axis, plot
  * - update dimensions
  * - update axis after deminsions are set
  * - draw chart
- * 
+ *
  *  */
-
 // Build base SVG chart
 const svg = select("body").append("svg");
 const chart = svg.append("g").classed("chart", true);
@@ -218,8 +205,6 @@ chart
 chart.select(".axis.y").call(yAxis);
 
 const el = svg.node()?.outerHTML;
-
-// console.log(el);
 ---
 
 <div set:html={el} />
