@@ -1,8 +1,8 @@
 ---
-
 /**
  * -------------------- D3: Data driver documents --------------------
- * 
+ * Drawing a scotterplot with Node and D3
+ *
  * Topics:
  * 1) JSDOM (D3 SSR)
  * 2) Load CSV via D3
@@ -12,7 +12,7 @@
  * 6) Domain, range and scaling
  * 7) Axis
  * 8) D3-select: draw chart
- * 
+ * -------------------------------------------------------------------
  */
 
 import globalJsdom from "global-jsdom";
@@ -32,6 +32,10 @@ import { milisecondsToMinutes } from "../utils";
  *
  *  */
 globalJsdom("<html><head></head><body></body></html>", {});
+/**
+ * EXAMPLE
+//  console.log(document);
+ */
 
 /**
  *
@@ -40,7 +44,7 @@ globalJsdom("<html><head></head><body></body></html>", {});
  * - group data
  * - can group by any property (d3.rollup)
  * - we only need to select by id fast
- * 
+ *
  *  */
 // Load pit stops
 const pitstops = await csv("http://localhost:3000/data/pit_stops.csv");
@@ -165,14 +169,14 @@ const xScale = (domain: Date[], range: number[]) => {
   return scaleTime()
     .domain(domain) // [min, max]
     .range(range) // [start, end]
-    .nice(); // start and end on tick
+    // .nice(); // start and end on tick
 };
 
 const yScale = (domain: number[], range: number[]) => {
   return scaleLinear()
     .domain(domain) // [min, max]
     .range(range) // [start, end]
-    .nice();
+    // .nice();
 };
 
 /**
@@ -186,8 +190,9 @@ const yScale = (domain: number[], range: number[]) => {
  *
  *  */
 // Define axis
-const xAxis: Axis<Date | NumberValue> = axisBottom(xScale(domain.x, range.x))
-  .tickSize(-innerHeight);
+const xAxis: Axis<Date | NumberValue> = axisBottom(
+  xScale(domain.x, range.x)
+).tickSize(-innerHeight);
 
 const yAxis: Axis<NumberValue> = axisLeft(yScale(domain.y, range.y.reverse()))
   .tickSize(-innerWidth)
@@ -202,7 +207,7 @@ const yAxis: Axis<NumberValue> = axisLeft(yScale(domain.y, range.y.reverse()))
  * - draw chart
  *
  *  */
-// Build base SVG chart
+// Build SVG chart
 const svg = select("body").append("svg");
 const chart = svg.append("g").classed("chart", true);
 
@@ -223,9 +228,28 @@ chart
   .select(".axis.x")
   .call(xAxis)
   .attr("transform", `translate(0,${innerHeight})`);
+
 chart.select(".axis.y").call(yAxis);
 
-const el = svg.node()?.outerHTML;
+// Draw dots
+chart
+    .select(".plot")
+    .selectAll("circle")
+    .data(data)
+    .join("circle")
+    .attr("r", 1)
+    .attr("class", "dot")
+    .attr("cx", d => xScale(domain.x, range.x)(d.x))
+    .attr("cy", d => yScale(domain.y, range.y.reverse())(d.y))
+    .attr("title", d => `Pit stop lasted ${milisecondsToMinutes(d.y)}ms`);
 
+const el = svg.node()?.outerHTML;
 ---
+
 <div set:html={el} />
+
+<style>
+  :global(.domain) {
+    stroke: none;
+  }
+</style>
