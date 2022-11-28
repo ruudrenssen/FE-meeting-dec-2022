@@ -1,7 +1,7 @@
 ---
 /**
  * -------------------- D3: Data driver documents --------------------
- * Drawing a scotterplot with Node and D3
+ * Drawing a simple scotterplot with Node and D3
  *
  * Topics:
  * 1) JSDOM (D3 SSR)
@@ -9,9 +9,9 @@
  * 3) Grouping data
  * 4) Querying grouped data
  * 5) Getting min, max or other aggregated values via D3
- * 6) Domain, range and scaling
+ * 6) Domain, range, scaling and the viewport
  * 7) Axis
- * 8) D3-select: draw chart
+ * 8) Draw a chart
  * 
  * -------------------------------------------------------------------
  */
@@ -100,6 +100,7 @@ const data = pitstops.filter(d => Number(d.milliseconds) < 120000).map((d) => {
     race: race?.name,
     driver: `${driver?.forename} ${driver.surname}`,
     constructor: constructor?.name,
+    lap: d?.lap
   };
 });
 /**
@@ -241,7 +242,7 @@ chart
   .attr("cx", (d) => xScale(domain.x, range.x)(d.x))
   .attr("cy", (d) => yScale(domain.y, range.y)(d.y))
   .append("title")
-  .text((d) => `${d.race}: ${d.constructor} (${d.driver}) pit stop lasted ${milisecondsToMinutes(d.y)}`);
+  .text((d) => `${d.race}: ${d.constructor} (${d.driver}) pit stop at lap ${d.lap} lasted ${milisecondsToMinutes(d.y)}`);
 
 const el = svg.node()?.outerHTML;
 
