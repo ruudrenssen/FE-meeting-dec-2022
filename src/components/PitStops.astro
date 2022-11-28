@@ -168,15 +168,15 @@ const range = {
 const xScale = (domain: Date[], range: number[]) => {
   return scaleTime()
     .domain(domain) // [min, max]
-    .range(range) // [start, end]
-    // .nice(); // start and end on tick
+    .range(range); // [start, end]
+  // .nice(); // start and end on tick
 };
 
 const yScale = (domain: number[], range: number[]) => {
   return scaleLinear()
     .domain(domain) // [min, max]
-    .range(range) // [start, end]
-    // .nice();
+    .range(range); // [start, end]
+  // .nice();
 };
 
 /**
@@ -233,15 +233,15 @@ chart.select(".axis.y").call(yAxis);
 
 // Draw dots
 chart
-    .select(".plot")
-    .selectAll("circle")
-    .data(data)
-    .join("circle")
-    .attr("r", 1)
-    .attr("class", "dot")
-    .attr("cx", d => xScale(domain.x, range.x)(d.x))
-    .attr("cy", d => yScale(domain.y, range.y.reverse())(d.y))
-    .attr("title", d => `Pit stop lasted ${milisecondsToMinutes(d.y)}ms`);
+  .select(".plot")
+  .selectAll("circle")
+  .data(data)
+  .join("circle")
+  .attr("r", 1)
+  .attr("class", "dot")
+  .attr("cx", (d) => xScale(domain.x, range.x)(d.x))
+  .attr("cy", (d) => yScale(domain.y, range.y.reverse())(d.y))
+  .attr("title", (d) => `Pit stop lasted ${milisecondsToMinutes(d.y)}ms`);
 
 const el = svg.node()?.outerHTML;
 ---
