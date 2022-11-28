@@ -141,7 +141,7 @@ const domain = {
  *
  * NOTES: RANGE
  * - nomally based on browser / bounding box
- * - arbitrary values for example
+ * - arbitrary values for this example
  *
  *  */
 // Describe the range (viewport)
@@ -240,7 +240,8 @@ chart
   .attr("class", "dot")
   .attr("cx", (d) => xScale(domain.x, range.x)(d.x))
   .attr("cy", (d) => yScale(domain.y, range.y)(d.y))
-  .attr("title", (d) => `${d.race}: ${d.constructor} (${d.driver}) pit stop lasted ${milisecondsToMinutes(d.y)}ms`);
+  .append("title")
+  .text((d) => `${d.race}: ${d.constructor} (${d.driver}) pit stop lasted ${milisecondsToMinutes(d.y)}`);
 
 const el = svg.node()?.outerHTML;
 
@@ -260,7 +261,7 @@ const el = svg.node()?.outerHTML;
  * - documentation              - the d3 library is big
  * 
  * 
- * Worth it? Depends... 
+ * Worth it? As always, it depends... 
  * 
  * 
  */
