@@ -1,0 +1,275 @@
+---
+/**
+ * -------------------- D3: Data driver documents --------------------
+ * Drawing a scotterplot with Node and D3
+ *
+ * Topics:
+ * 1) JSDOM (D3 SSR)
+ * 2) Load CSV via D3
+ * 3) Grouping data
+ * 4) Querying grouped data
+ * 5) Getting min, max or other aggregated values via D3
+ * 6) Domain, range and scaling
+ * 7) Axis
+ * 8) D3-select: draw chart
+ * 
+ * -------------------------------------------------------------------
+ */
+
+import globalJsdom from "global-jsdom";
+
+import { csv } from "d3-fetch";
+import { minIndex, maxIndex, group, InternMap } from "d3-array";
+import { scaleLinear, scaleTime } from "d3-scale";
+import { axisBottom, axisLeft } from "d3-axis";
+import { select } from "d3-selection";
+
+import { milisecondsToMinutes } from "../utils";
+
+/**
+ *
+ * NOTES: JSDom, globalJsdom
+ * - D3 needs the document on a global level
+ *
+ *  */
+globalJsdom("<html><head></head><body></body></html>", {});
+/**
+ * EXAMPLE
+//  console.log(document);
+ */
+
+/**
+ *
+ * NOTES: LOAD AND GROUP DATA
+ * - csv import
+ * - group data
+ * - can group by any property (d3.rollup)
+ * - we only need to select by id fast
+ *
+ *  */
+// Load pit stops
+const pitstops = await csv("http://localhost:3000/data/pit_stops.csv");
+
+// Load and group related data
+const races: InternMap = group(
+  await csv("http://localhost:3000/data/races.csv"),
+  (d) => String(d.raceId)
+);
+const drivers: InternMap = group(
+  await csv("http://localhost:3000/data/drivers.csv"),
+  (d) => String(d.driverId)
+);
+const constructors: InternMap = group(
+  await csv("http://localhost:3000/data/constructors.csv"),
+  (d) => String(d.constructorId)
+);
+const results: InternMap = group(
+  await csv("http://localhost:3000/data/results.csv"),
+  (d) => String(d.raceId),
+  (d) => String(d.driverId)
+);
+/**
+ * EXAMPLES:
+ * console.log("csv to json:", pitstops); // pit stop table
+ * console.dir(results, { depth: 4 }); // raceId => driverid
+ *
+ */
+
+/**
+ *
+ * NOTES: GET GROUPED DATA
+ * - getRace: group.get(raceId)
+ * - chaining: getContructor group.get(raceId).get(driverId)
+ *
+ *  */
+// Get related data via id
+const getRace = (raceId: string) => races.get(raceId)[0];
+const getDriver = (driverId: string) => drivers.get(driverId)[0];
+const getContructor = (raceId: string, driverId: string) =>
+  constructors.get(results.get(raceId)?.get(driverId)[0].constructorId)[0];
+
+// Create data object for chart
+const data = pitstops.filter(d => Number(d.milliseconds) < 120000).map((d) => {
+  const race = getRace(String(d.raceId));
+  const driver = getDriver(String(d.driverId));
+  const constructor = getContructor(String(d.raceId), String(d.driverId));
+
+  return {
+    y: Number(d.milliseconds),
+    x: new Date(race?.date),
+    race: race?.name,
+    driver: `${driver?.forename} ${driver.surname}`,
+    constructor: constructor?.name,
+  };
+});
+/**
+ * EXAMPLES:
+ * - console.log("race:", getRace('841'));
+ * - console.log("constructor:", getContructor('841','17'));
+ *
+ */
+
+/**
+ *
+ * NOTES: DOMAIN
+ * - fastest and slowest pit stop: y domain
+ * - date first and last pit: x domain
+ * - min vs. minIndex
+ * - d3.min takes care of numbers, dates and labels in an intuitive fashion; no need to cast
+ * - besides min and max, there is also mean, median, mode (value that appears the most often), sum, etc
+ *
+ *  */
+// Describe the domain (plot)
+const minX = data[minIndex(data, (d) => d.x)];
+const maxX = data[maxIndex(data, (d) => d.x)];
+const minY = data[minIndex(data, (d) => d.y)];
+const maxY = data[maxIndex(data, (d) => d.y)];
+const domain = {
+  x: [minX.x, maxX.x],
+  y: [minY.y, maxY.y],
+};
+/**
+ * EXAMPLES:
+ * - console.log("first pit stop:", minX);
+ * - console.log("last pit stop:", maxX);
+ * - console.log("fastest pit stop:", minX);
+ * - console.log("slowest pit stop:", maxX);
+ *
+ */
+
+/**
+ *
+ * NOTES: RANGE
+ * - nomally based on browser / bounding box
+ * - arbitrary values for example
+ *
+ *  */
+// Describe the range (viewport)
+const margin = { top: 20, right: 20, bottom: 20, left: 60 };
+const width = 800;
+const innerWidth = width - margin.right - margin.left;
+const height = 500;
+const innerHeight = height - margin.top - margin.bottom;
+const range = {
+  x: [0, innerWidth],
+  y: [0, innerHeight],
+};
+
+/**
+ *
+ * NOTES: SCALING FUNCTION
+ * - turns value (domain) into coordinate (range)
+ * - linear, time (exponential, quantile, treshold)
+ * - domain (min max value)
+ * - range (start end in pixels)
+ * - return function
+ *
+ *  */
+// Scaling functions
+const xScale = (domain: Date[], range: number[]) => {
+  return scaleTime()
+    .domain(domain) // [min, max]
+    .range(range) // [start, end]
+    .nice(); // start and end on tick
+};
+
+const yScale = (domain: number[], range: number[]) => {
+  return scaleLinear()
+    .domain(domain) // [min, max]
+    .range(range) // [start, end]
+    .nice();
+};
+
+/**
+ *
+ * NOTES: AXIS
+ * - x: time
+ * - y: numerical / linear
+ * - yAxis: reverse()
+ * - ticksize (minus?)
+ * - tickFormat (turn value into label)
+ *
+ *  */
+// Define axis
+const xAxis: any = axisBottom(xScale(domain.x, range.x)).tickSize(-innerHeight);
+
+const yAxis: any = axisLeft(yScale(domain.y, range.y.reverse()))
+  .tickSize(-innerWidth)
+  .tickFormat((d) => milisecondsToMinutes(d));
+
+/**
+ *
+ * NOTES: SVG
+ * - create groups: container, axis, plot
+ * - update dimensions
+ * - update axis after deminsions are set
+ * - draw chart
+ *
+ *  */
+// Build SVG chart
+const svg = select("body").append("svg");
+const chart = svg.append("g").classed("chart", true);
+
+chart.append("g").classed("axis x", true);
+chart.append("g").classed("axis y", true);
+chart.append("g").classed("plot", true);
+
+// Update viewbox
+svg
+  .attr("viewBox", `0 0 ${width} ${height}`)
+  .attr("width", width)
+  .attr("height", height)
+  .select("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
+
+// Update axis
+chart
+  .select(".axis.x")
+  .call(xAxis)
+  .attr("transform", `translate(0,${innerHeight})`);
+
+chart.select(".axis.y").call(yAxis);
+
+// Draw dots
+chart
+  .select(".plot")
+  .selectAll("circle")
+  .data(data)
+  .join("circle")
+  .attr("r", 1)
+  .attr("class", "dot")
+  .attr("cx", (d) => xScale(domain.x, range.x)(d.x))
+  .attr("cy", (d) => yScale(domain.y, range.y)(d.y))
+  .attr("title", (d) => `${d.race}: ${d.constructor} (${d.driver}) pit stop lasted ${milisecondsToMinutes(d.y)}ms`);
+
+const el = svg.node()?.outerHTML;
+
+/**
+ * --------------------------- Some notes ----------------------------
+ * - Normally you would not append all elements. In this case
+ *   it's done because there is no existing DOM. By convention, D3
+ *   selects already existing DOM-elements.
+ * - The demo only covered initial draw. If you're dealing with
+ *   changing data, the join function can be extended with enter,
+ *   update and exit functions.
+ * 
+ * --------------------------- Conlusions ----------------------------
+ * Pro's                        Cons
+ * - control                    - simple chart takes longer
+ * - flexibility                - learning curve
+ * - documentation              - the d3 library is big
+ * 
+ * 
+ * Worth it? Depends... 
+ * 
+ * 
+ */
+---
+
+<div set:html={el} />
+
+<style>
+  :global(.domain) {
+    stroke: none;
+  }
+</style>
