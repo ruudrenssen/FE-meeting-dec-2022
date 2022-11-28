@@ -190,11 +190,9 @@ const yScale = (domain: number[], range: number[]) => {
  *
  *  */
 // Define axis
-const xAxis:any = axisBottom(
-  xScale(domain.x, range.x)
-).tickSize(-innerHeight);
+const xAxis: any = axisBottom(xScale(domain.x, range.x)).tickSize(-innerHeight);
 
-const yAxis:any = axisLeft(yScale(domain.y, range.y.reverse()))
+const yAxis: any = axisLeft(yScale(domain.y, range.y.reverse()))
   .tickSize(-innerWidth)
   .tickFormat((d) => milisecondsToMinutes(d));
 
