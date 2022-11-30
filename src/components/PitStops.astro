@@ -1,4 +1,14 @@
 ---
+import globalJsdom from "global-jsdom";
+
+import { csv } from "d3-fetch";
+import { minIndex, maxIndex, group, InternMap } from "d3-array";
+import { scaleLinear, scaleTime } from "d3-scale";
+import { axisBottom, axisLeft } from "d3-axis";
+import { select } from "d3-selection";
+
+import { milisecondsToMinutes } from "../utils";
+
 /**
  * -------------------- D3: Data driver documents --------------------
  * Drawing a simple scotterplot with Node and D3
@@ -15,16 +25,6 @@
  * 
  * -------------------------------------------------------------------
  */
-
-import globalJsdom from "global-jsdom";
-
-import { csv } from "d3-fetch";
-import { minIndex, maxIndex, group, InternMap } from "d3-array";
-import { scaleLinear, scaleTime } from "d3-scale";
-import { axisBottom, axisLeft } from "d3-axis";
-import { select } from "d3-selection";
-
-import { milisecondsToMinutes } from "../utils";
 
 /**
  *
@@ -266,6 +266,7 @@ const el = svg.node()?.outerHTML;
  * 
  * 
  */
+
 ---
 
 <div set:html={el} />
