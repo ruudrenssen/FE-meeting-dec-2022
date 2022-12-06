@@ -34,10 +34,8 @@ import { milisecondsToMinutes } from "../utils";
  *
  *  */
 globalJsdom("<html><head></head><body></body></html>", {});
-/**
- * EXAMPLE
+// EXAMPLE
 //  console.log(document);
- */
 
 /**
  *
@@ -69,12 +67,9 @@ const results: InternMap = group(
   (d) => String(d.raceId),
   (d) => String(d.driverId)
 );
-/**
- * EXAMPLES:
- * console.log("csv to json:", pitstops); // pit stop table
- * console.dir(results, { depth: 4 }); // raceId => driverid
- *
- */
+// EXAMPLES:
+// console.log("csv to json:", pitstops); // pit stop table
+// console.dir(results, { depth: 4 }); // raceId => driverid
 
 /**
  *
@@ -104,12 +99,9 @@ const data = pitstops.filter(d => Number(d.milliseconds) < 120000).map((d) => {
     lap: d?.lap
   };
 });
-/**
- * EXAMPLES:
- * - console.log("race:", getRace('841'));
- * - console.log("constructor:", getContructor('841','17'));
- *
- */
+// EXAMPLES:
+// console.log("race:", getRace('841'));
+// console.log("constructor:", getContructor('841','17'));
 
 /**
  *
@@ -130,14 +122,11 @@ const domain = {
   x: [minX.x, maxX.x],
   y: [minY.y, maxY.y],
 };
-/**
- * EXAMPLES:
- * - console.log("first pit stop:", minX);
- * - console.log("last pit stop:", maxX);
- * - console.log("fastest pit stop:", minX);
- * - console.log("slowest pit stop:", maxX);
- *
- */
+// EXAMPLES:
+// console.log("first pit stop:", minX);
+// console.log("last pit stop:", maxX);
+// console.log("fastest pit stop:", minX);
+// console.log("slowest pit stop:", maxX);
 
 /**
  *
@@ -177,10 +166,12 @@ const xScale = (domain: Date[], range: number[]) => {
 
 const yScale = (domain: number[], range: number[]) => {
   return scaleLinear()
-    .domain(domain) // [min, max]
-    .range(range) // [start, end]
-    .nice();
+  .domain(domain) // [min, max]
+  .range(range) // [start, end]
+  .nice();
 };
+// EXAMPLES:
+// console.log(yScale, yScale(domain.y, range.y)(90000));
 
 /**
  *
