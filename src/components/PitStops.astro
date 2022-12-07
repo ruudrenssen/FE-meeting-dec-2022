@@ -171,7 +171,7 @@ const yScale = (domain: number[], range: number[]) => {
   .nice();
 };
 // EXAMPLES:
-// console.log(yScale, yScale(domain.y, range.y)(90000));
+// console.log(yScale, yScale(domain.y, range.y)(90000)); // time in ms -> y position in pixel
 
 /**
  *
@@ -185,10 +185,11 @@ const yScale = (domain: number[], range: number[]) => {
  *  */
 // Define axis
 const xAxis: any = axisBottom(xScale(domain.x, range.x)).tickSize(-innerHeight);
-
 const yAxis: any = axisLeft(yScale(domain.y, range.y.reverse()))
   .tickSize(-innerWidth)
   .tickFormat((d) => milisecondsToMinutes(d));
+// EXAMPLES:
+// console.log(xAxis, yAxis) // axis functions
 
 /**
  *
